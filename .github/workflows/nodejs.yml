@@ -40,6 +40,14 @@ jobs:
       run: |
         docker build -t react-app .
 
+    - name: Log in to Amazon ECR
+      uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Tag Docker image & Push
+      run: |
+        docker tag react-app:latest 211125436022.dkr.ecr.us-east-1.amazonaws.com/test:latest
+        docker push 211125436022.dkr.ecr.us-east-1.amazonaws.com/test:latest
+      
     
     - name: Deploy the application (optional)
       run: |
