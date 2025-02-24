@@ -55,8 +55,30 @@ jobs:
         docker tag react-app:latest 211125436022.dkr.ecr.us-east-1.amazonaws.com/test:latest
         docker push 211125436022.dkr.ecr.us-east-1.amazonaws.com/test:latest
 
+  #Create an Elastic Beanstalk Dockerrun.aws.json file
+    - name: Create Dockerrun.aws.json file
+      run: |
+        echo '{
+          "AWSEBDockerrunVersion": "2",
+          "Image": {
+            "Name": "211125436022.dkr.ecr.us-east-1.amazonaws.com/test:latest",
+            "Update": "true"
+          },
+          "Ports": [
+            {
+              "ContainerPort": "80"
+            }
+          ]
+        }' > Dockerrun.aws.json
+
+    # Deploy to Elastic Beanstalk
+    - name: Deploy to Elastic Beanstalk
+      run: |
+        eb init -p docker my-app --region us-east-1
+        eb deploy
+
       
     
-    - name: Deploy the application (optional)
-      run: |
-        echo "Deploying to production..."
+ #   - name: Deploy the application (optional)
+  #    run: |
+ #       echo "Deploying to production..."
