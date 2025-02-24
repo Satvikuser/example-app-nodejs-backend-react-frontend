@@ -50,12 +50,12 @@ jobs:
       run: |
         aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 211125436022.dkr.ecr.us-east-1.amazonaws.com
 
-    - name: Tag Docker image & Push
+    - name: Tag Docker image & Push to ECR
       run: |
         docker tag react-app:latest 211125436022.dkr.ecr.us-east-1.amazonaws.com/test:latest
         docker push 211125436022.dkr.ecr.us-east-1.amazonaws.com/test:latest
 
-  #Create an Elastic Beanstalk Dockerrun.aws.json file
+    # Create Dockerrun.aws.json file
     - name: Create Dockerrun.aws.json file
       run: |
         echo '{
@@ -71,12 +71,16 @@ jobs:
           ]
         }' > Dockerrun.aws.json
 
+    # Install Elastic Beanstalk CLI
+    - name: Install Elastic Beanstalk CLI
+      run: |
+        pip install awsebcli
+
     # Deploy to Elastic Beanstalk
     - name: Deploy to Elastic Beanstalk
       run: |
         eb init -p docker my-app --region us-east-1
         eb deploy
-
       
     
  #   - name: Deploy the application (optional)
