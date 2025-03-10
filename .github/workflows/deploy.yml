@@ -1,0 +1,53 @@
+name: Deploy React App to Elastic Beanstalk
+
+on:
+  push:
+    branches:
+      - main_1  # Deploy only when code is pushed to the `main` branch
+
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: 
+        aws-secret-access-key: 
+        aws-region: us-east-1  # Change this to your AWS region
+
+    - name: Login to AWS ECR
+      id: login-ecr
+      run: |
+        aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 686255968621.dkr.ecr.us-east-1.amazonaws.com
+    - name: Generate Image Tag (Date and Time)
+      id: generate-tag
+      run: echo "IMAGE_TAG=$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_ENV
+
+    - name: Build & Push Docker Image to ECR
+      env:
+        ECR_REPOSITORY: vetsave-stage  # Change this to your ECR repo name
+        AWS_ACCOUNT_ID: 686255968621.dkr.ecr.us-east-1.amazonaws.com
+        AWS_REGION: us-east-1
+      run: |
+        docker build -t 686255968621.dkr.ecr.us-east-1.amazonaws.com/vetsave-stage:$IMAGE_TAG .
+        docker push 686255968621.dkr.ecr.us-east-1.amazonaws.com/vetsave-stage:$IMAGE_TAG
+
+    - name: Upload Dockerrun.aws.json to S3
+      run: |
+        aws s3 cp Dockerrun.aws.json s3://elasticbeanstalk-us-east-1-686255968621/Dockerrun.aws.json 
+
+    - name: Create New Application Version in Elastic Beanstalk
+      run: |
+        aws elasticbeanstalk create-application-version --application-name Frontend_Vetsave_cicd \
+        --version-label $IMAGE_TAG --source-bundle S3Bucket="elasticbeanstalk-us-east-1-686255968621",S3Key="Dockerrun.aws.json"
+
+    - name: Deploy to Elastic Beanstalk
+      run: |
+        aws elasticbeanstalk update-environment --environment-name FrontendVetsavecicd-env \
+        --version-label $IMAGE_TAG
